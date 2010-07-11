@@ -55,24 +55,23 @@ class CardSearch:
         try:
             f = open(filepath, 'r')
 
+            confirmed_matches = []
+
             for line in f:
                 cardpattern = re.compile('\d{12,19}')
 
                 matches = cardpattern.findall(line)
-
-                confirmed_matches = []
 
                 if matches:
                     for match in matches:
                         if (is_luhn_valid(match)):
                             confirmed_matches.append(match)
 
-                if confirmed_matches:
-                    self.output_file.write("Found %d matches in %s\n" % (len(confirmed_matches), filepath))
-                    for match in confirmed_matches:
-                        self.output_file.write("%s\n" % (match))
                 usleep(1)
-
+            if confirmed_matches:
+                self.output_file.write("Found %d matches in %s\n" % (len(confirmed_matches), filepath))
+                for match in confirmed_matches:
+                    self.output_file.write("%s\n" % (match))
 
         except IOError:
             print >> sys.stderr, "Can't read %s" % (filepath)
