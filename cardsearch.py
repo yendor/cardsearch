@@ -7,6 +7,9 @@ class CardSearch:
          self.output_filename = "/var/log/cardsearch.log"
          self.start_path = "/"
 
+         self.lines_per_scan = 50
+         self.sleep_per_scan = 1
+
          shortargs = 'o:f:d:'
          longargs = ['output=', 'config=', 'start=']
 
@@ -21,6 +24,7 @@ class CardSearch:
                  self.start_path = os.path.abspath(arg)
 
          self.whitelist_filenames = [self.output_filename, "/proc", "/dev"]
+         print >> sys.stderr, "Sleeping for %d microseconds every %d lines per file scanned" % (self.sleep_per_scan, self.lines_per_scan)
 
     def search(self):
         if os.path.isdir(self.start_path):
@@ -57,7 +61,10 @@ class CardSearch:
 
             confirmed_matches = []
 
+            linenum=0
+
             for line in f:
+                linenum = linenum + 1
                 cardpattern = re.compile('\d{12,19}')
 
                 matches = cardpattern.findall(line)
@@ -66,8 +73,8 @@ class CardSearch:
                     for match in matches:
                         if (is_luhn_valid(match)):
                             confirmed_matches.append(match)
-
-                usleep(1)
+                if linenum % self.lines_per_scan == 0:
+                    usleep(self.sleep_per_scan)
             if confirmed_matches:
                 self.output_file.write("Found %d matches in %s\n" % (len(confirmed_matches), filepath))
                 for match in confirmed_matches:
