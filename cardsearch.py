@@ -77,8 +77,6 @@ class CardSearch:
                     usleep(self.sleep_per_scan)
             if confirmed_matches:
                 self.output_file.write("Found %d matches in %s\n" % (len(confirmed_matches), filepath))
-                for match in confirmed_matches:
-                    self.output_file.write("%s\n" % (match))
 
         except IOError:
             print >> sys.stderr, "Can't read %s" % (filepath)
