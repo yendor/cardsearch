@@ -71,7 +71,7 @@ class CardSearch:
 
                 if matches:
                     for match in matches:
-                        if (is_luhn_valid(match)):
+                        if (possible_credit_card(match)):
                             confirmed_matches.append(match)
                 if linenum % self.lines_per_scan == 0:
                     usleep(self.sleep_per_scan)
@@ -82,6 +82,12 @@ class CardSearch:
 
         except IOError:
             print >> sys.stderr, "Can't read %s" % (filepath)
+
+def possible_credit_card(cardnum):
+    if cardnum == "0" * len(cardnum):
+        return False
+
+    return is_luhn_valid(cardnum)
 
 def is_luhn_valid(cc):
      num = map(int, cc)
