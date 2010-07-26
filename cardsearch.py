@@ -1,17 +1,21 @@
 #!/usr/bin/env python
 
 import getopt, sys, os, re, time
+import syslog
 
 class CardSearch:
     def __init__(self):
-         self.output_filename = "/var/log/cardsearch.log"
+         self.output_filename = ""
          self.start_path = "/"
 
-         self.lines_per_scan = 50
-         self.sleep_per_scan = 1
+         self.lines_per_scan = 0
+         self.sleep_per_scan = 0
+         self.quiet = False
+         self.syslog = False
+         self.output_file = False
 
-         shortargs = 'o:f:d:'
-         longargs = ['output=', 'config=', 'start=']
+         shortargs = 'o:f:d:qs'
+         longargs = ['output=', 'config=', 'start=', 'quiet', 'syslog']
 
          options, remainder = getopt.getopt(sys.argv[1:], shortargs, longargs)
 
@@ -22,21 +26,21 @@ class CardSearch:
                  self.config_filename = arg
              elif opt in ('-d', '--start'):
                  self.start_path = os.path.abspath(arg)
+             elif opt in ('-q', '--quiet'):
+                 self.quiet = True
+             elif opt in ('-s', '--syslog'):
+                 self.syslog = True
 
          self.whitelist_filenames = [self.output_filename, "/proc", "/dev"]
-         print >> sys.stderr, "Sleeping for %d microseconds every %d lines per file scanned" % (self.sleep_per_scan, self.lines_per_scan)
+         if self.quiet == False:
+             print >> sys.stderr, "Sleeping for %d microseconds every %d lines per file scanned" % (self.sleep_per_scan, self.lines_per_scan)
 
     def search(self):
         if os.path.isdir(self.start_path):
-            try:
-                self.output_file = open(self.output_filename, 'w')
-            except IOError:
-                print >> sys.stderr, "Can't open log file %s for writing" % (self.output_filename)
-                sys.exit(1)
-
+            self.loginit()
             self.walk(self.start_path)
         else:
-            print "Starting directory %s does not exist, exiting." % (self.start_path)
+            print >> sys.stderr, "Starting directory %s does not exist, exiting." % (self.start_path)
             sys.exit(1)
 
     def walk(self, dir):
@@ -45,7 +49,8 @@ class CardSearch:
                 path = os.path.join(dir,name)
 
                 if path in self.whitelist_filenames:
-                    print >> sys.stderr, "Skipping %s due to whitelisting" % (path)
+                    if self.quiet == False:
+                        print >> sys.stderr, "Skipping %s due to whitelisting" % (path)
                     continue
 
                 if os.path.isfile(path):
@@ -53,7 +58,8 @@ class CardSearch:
                 elif os.path.isdir(path) and not os.path.islink(path):
                     self.walk(path)
         except OSError:
-            print >> sys.stderr, "Permission denied to %s" % (dir)
+            if self.quiet == False:
+                print >> sys.stderr, "Permission denied to %s" % (dir)
 
     def check(self, filepath):
         try:
@@ -73,13 +79,34 @@ class CardSearch:
                     for match in matches:
                         if (possible_credit_card(match)):
                             confirmed_matches.append(match)
-                if linenum % self.lines_per_scan == 0:
+                if self.lines_per_scan > 0 and linenum % self.lines_per_scan == 0:
                     usleep(self.sleep_per_scan)
             if confirmed_matches:
-                self.output_file.write("Found %d matches in %s\n" % (len(confirmed_matches), filepath))
+                self.log("Found %d matches in %s\n" % (len(confirmed_matches), filepath))
 
         except IOError:
-            print >> sys.stderr, "Can't read %s" % (filepath)
+            if not self.quiet:
+                print >> sys.stderr, "Can't read %s" % (filepath)
+
+    def loginit(self):
+        try:
+            if self.output_filename and self.syslog == False:
+                self.output_file = open(self.output_filename, 'w')
+            elif self.syslog == True:
+                syslog.openlog('cardsearch')
+
+        except IOError:
+            print >> sys.stderr, "Can't open log file %s for writing" % (self.output_filename)
+            sys.exit(1)
+
+
+
+    def log(self, message):
+        if self.syslog:
+            syslog.syslog(message)
+        if self.output_file:
+             self.output_file.write(message)
+
 
 def possible_credit_card(cardnum):
     if cardnum == "0" * len(cardnum):
