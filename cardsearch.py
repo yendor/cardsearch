@@ -99,8 +99,6 @@ class CardSearch:
             print >> sys.stderr, "Can't open log file %s for writing" % (self.output_filename)
             sys.exit(1)
 
-
-
     def log(self, message):
         if self.syslog:
             syslog.syslog(message)
@@ -110,6 +108,85 @@ class CardSearch:
 
 def possible_credit_card(cardnum):
     if cardnum == "0" * len(cardnum):
+        return False
+
+    # American Express
+    if cardnum[:2] in [34, 37] and len(cardnum) != 15:
+        return False
+
+    # Bankcard
+    if cardnum[:4] in [5610] and len(cardnum) != 16:
+        return False
+
+    # Bankcard
+    if cardnum[:6] in range(560221, 560225) and len(cardnum) != 16:
+        return False
+
+    # Diners Club Carte Blanche
+    if cardnum[:3] in range(300, 305) and len(cardnum) != 14:
+        return False
+
+    # Diners Club International
+    if cardnum[:2] in [36] and len(cardnum) != 14:
+        return False
+
+    # Diners Club United States and Canada
+    if cardnum[:2] in range(54, 55) and len(cardnum) != 16:
+        return False
+
+    # Discover Card
+    if cardnum[:4] in [6011] and len(cardnum) != 16:
+        return False
+    # Discover Card
+    if cardnum[:6] in range(622126, 622925) and len(cardnum) != 16:
+        return False
+
+    # Discover Card
+    if cardnum[:3] in range(644, 649) and len(cardnum) != 16:
+        return False
+
+    # Discover Card
+    if cardnum[:2] in [65] and len(cardnum) != 16:
+        return False
+
+    # Instapaymment
+    if cardnum[:3] in range(637, 639) and len(cardnum) != 16:
+        return False
+
+    # JCB
+    if cardnum[:4] in range(3528, 3589) and len(cardnum) != 16:
+        return False
+
+    # Maestro
+    if cardnum[:4] in [5018, 5020, 5020, 5038, 6304, 6759, 6761, 6763] and len(cardnum) not in range(12, 19):
+        return False
+
+    # MasterCard
+    if cardnum[:2] in range(51, 55) and len(cardnum) != 16:
+         return False
+
+    # Solo
+    if cardnum[:4] in [6334, 6767] and len(cardnum) not in [6, 18, 19]:
+        return False
+
+    # Switch
+    if cardnum[:4] in [4903, 4905, 4911, 4936, 6333, 6759] and len(cardnum) not in [16, 18, 19]:
+        return False
+
+    # Switch
+    if cardnum[:6] in [564182, 633110] and len(cardnum) not in [16, 18, 19]:
+        return False
+
+    # Visa
+    if cardnum[:1] in [4] and len(cardnum) != 16:
+        return False
+
+    # Visa Elecrton
+    if cardnum[:4] in [4026, 4508, 4844, 4913, 4917] and len(cardnum) != 16:
+        return False
+
+    # Visa Electron
+    if cardnum[:6] in [417500] and len(cardnum) != 16:
         return False
 
     return is_luhn_valid(cardnum)
