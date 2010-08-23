@@ -105,91 +105,93 @@ class CardSearch:
         if self.output_file:
              self.output_file.write(message)
 
-
 def possible_credit_card(cardnum):
-    if cardnum == "0" * len(cardnum):
+    cardlen = len(cardnum)
+
+    if cardnum == "0" * cardlen:
         return False
 
     # American Express
-    if cardnum[:2] in [34, 37] and len(cardnum) != 15:
-        return False
+    if int(cardnum[:2]) in [34, 37] and cardlen == 15:
+        return is_luhn_valid(cardnum)
 
     # Bankcard
-    if cardnum[:4] in [5610] and len(cardnum) != 16:
-        return False
+    if int(cardnum[:4]) in [5610] and cardlen == 16:
+        return is_luhn_valid(cardnum)
 
     # Bankcard
-    if cardnum[:6] in range(560221, 560225) and len(cardnum) != 16:
-        return False
+    if int(cardnum[:6]) in range(560221, 560225) and cardlen == 16:
+        return is_luhn_valid(cardnum)
 
     # Diners Club Carte Blanche
-    if cardnum[:3] in range(300, 305) and len(cardnum) != 14:
-        return False
+    if int(cardnum[:3]) in range(300, 305) and cardlen == 14:
+        return is_luhn_valid(cardnum)
 
     # Diners Club International
-    if cardnum[:2] in [36] and len(cardnum) != 14:
-        return False
+    if int(cardnum[:2]) in [36] and cardlen == 14:
+        return is_luhn_valid(cardnum)
 
     # Diners Club United States and Canada
-    if cardnum[:2] in range(54, 55) and len(cardnum) != 16:
-        return False
+    if int(cardnum[:2]) in range(54, 55) and cardlen == 16:
+        return is_luhn_valid(cardnum)
 
     # Discover Card
-    if cardnum[:4] in [6011] and len(cardnum) != 16:
-        return False
-    # Discover Card
-    if cardnum[:6] in range(622126, 622925) and len(cardnum) != 16:
-        return False
+    if int(cardnum[:4]) in [6011] and cardlen == 16:
+        return is_luhn_valid(cardnum)
 
     # Discover Card
-    if cardnum[:3] in range(644, 649) and len(cardnum) != 16:
-        return False
+    if int(cardnum[:6]) in range(622126, 622925) and cardlen == 16:
+        return is_luhn_valid(cardnum)
 
     # Discover Card
-    if cardnum[:2] in [65] and len(cardnum) != 16:
-        return False
+    if int(cardnum[:3]) in range(644, 649) and cardlen == 16:
+        return is_luhn_valid(cardnum)
+
+    # Discover Card
+    if int(cardnum[:2]) in [65] and cardlen == 16:
+        return is_luhn_valid(cardnum)
 
     # Instapaymment
-    if cardnum[:3] in range(637, 639) and len(cardnum) != 16:
-        return False
+    if int(cardnum[:3]) in range(637, 639) and cardlen == 16:
+        return is_luhn_valid(cardnum)
 
     # JCB
-    if cardnum[:4] in range(3528, 3589) and len(cardnum) != 16:
-        return False
+    if int(cardnum[:4]) in range(3528, 3589) and cardlen == 16:
+        return is_luhn_valid(cardnum)
 
     # Maestro
-    if cardnum[:4] in [5018, 5020, 5020, 5038, 6304, 6759, 6761, 6763] and len(cardnum) not in range(12, 19):
-        return False
+    if int(cardnum[:4]) in [5018, 5020, 5020, 5038, 6304, 6759, 6761, 6763] and cardlen in range(12, 19):
+        return is_luhn_valid(cardnum)
 
     # MasterCard
-    if cardnum[:2] in range(51, 55) and len(cardnum) != 16:
-         return False
+    if int(cardnum[:2]) in range(51, 55) and cardlen == 16:
+        return is_luhn_valid(cardnum)
 
     # Solo
-    if cardnum[:4] in [6334, 6767] and len(cardnum) not in [6, 18, 19]:
-        return False
+    if int(cardnum[:4]) in [6334, 6767] and cardlen in [6, 18, 19]:
+        return is_luhn_valid(cardnum)
 
     # Switch
-    if cardnum[:4] in [4903, 4905, 4911, 4936, 6333, 6759] and len(cardnum) not in [16, 18, 19]:
-        return False
+    if int(cardnum[:4]) in [4903, 4905, 4911, 4936, 6333, 6759] and cardlen in [16, 18, 19]:
+        return is_luhn_valid(cardnum)
 
     # Switch
-    if cardnum[:6] in [564182, 633110] and len(cardnum) not in [16, 18, 19]:
-        return False
+    if int(cardnum[:6]) in [564182, 633110] and cardlen in [16, 18, 19]:
+        return is_luhn_valid(cardnum)
 
     # Visa
-    if cardnum[:1] in [4] and len(cardnum) != 16:
-        return False
+    if int(cardnum[:1]) in [4] and cardlen == 16:
+        return is_luhn_valid(cardnum)
 
     # Visa Elecrton
-    if cardnum[:4] in [4026, 4508, 4844, 4913, 4917] and len(cardnum) != 16:
-        return False
+    if int(cardnum[:4]) in [4026, 4508, 4844, 4913, 4917] and cardlen == 16:
+        return is_luhn_valid(cardnum)
 
     # Visa Electron
-    if cardnum[:6] in [417500] and len(cardnum) != 16:
-        return False
+    if int(cardnum[:6]) in [417500] and cardlen == 16:
+        return is_luhn_valid(cardnum)
 
-    return is_luhn_valid(cardnum)
+    return False
 
 def is_luhn_valid(cc):
      num = map(int, cc)
