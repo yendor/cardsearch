@@ -71,7 +71,7 @@ class CardSearch:
 
             for line in f:
                 linenum = linenum + 1
-                cardpattern = re.compile('\d{12,19}')
+                cardpattern = re.compile(r'\b\d{12,19}\b')
 
                 matches = cardpattern.findall(line)
 
