@@ -12,22 +12,23 @@ class CardSearch:
          self.sleep_per_scan = 0
          self.quiet = False
          self.syslog = False
+         self.verbose = False
          self.output_file = False
 
-         shortargs = 'o:f:d:qs'
-         longargs = ['output=', 'config=', 'start=', 'quiet', 'syslog']
+         shortargs = 'o:f:d:qsv'
+         longargs = ['output=', 'start=', 'quiet', 'syslog', 'verbose']
 
          options, remainder = getopt.getopt(sys.argv[1:], shortargs, longargs)
 
          for opt, arg in options:
              if opt in ('-o', '--output'):
                  self.output_filename = os.path.abspath(arg)
-             elif opt in ('-f', '--config'):
-                 self.config_filename = arg
              elif opt in ('-d', '--start'):
                  self.start_path = os.path.abspath(arg)
              elif opt in ('-q', '--quiet'):
                  self.quiet = True
+             elif opt in ('-v', '--verbose'):
+                 self.verbose = True
              elif opt in ('-s', '--syslog'):
                  self.syslog = True
 
@@ -79,6 +80,8 @@ class CardSearch:
                     for match in matches:
                         if (possible_credit_card(match)):
                             confirmed_matches.append(match)
+                            if self.verbose:
+                                print "%s %s" % (filepath, match)
                 if self.lines_per_scan > 0 and linenum % self.lines_per_scan == 0:
                     usleep(self.sleep_per_scan)
             if confirmed_matches:
