@@ -3,62 +3,67 @@
 import getopt, sys, os, re, time
 import syslog
 
+import traceback
+
 class CardSearch:
     def __init__(self):
-         self.output_filename = ""
-         self.start_path = "/"
+        self.output_filename = ""
+        self.start_paths = None
 
-         self.lines_per_scan = 0
-         self.sleep_per_scan = 0
-         self.quiet = False
-         self.syslog = False
-         self.verbose = False
-         self.output_file = False
+        self.lines_per_scan = 0
+        self.sleep_per_scan = 0
+        self.quiet = False
+        self.syslog = False
+        self.verbose = False
+        self.output_file = False
+        self.whitelist_extensions = set();
+        shortargs = 'o:qsve:'
+        longargs = ['output=', 'quiet', 'syslog', 'verbose', 'noextensions=']
 
-         shortargs = 'o:f:d:qsv'
-         longargs = ['output=', 'start=', 'quiet', 'syslog', 'verbose']
+        options, self.start_paths = getopt.getopt(sys.argv[1:], shortargs, longargs)
 
-         options, remainder = getopt.getopt(sys.argv[1:], shortargs, longargs)
+        for opt, arg in options:
+            if opt in ('-o', '--output'):
+                self.output_filename = os.path.abspath(arg)
+            elif opt in ('-q', '--quiet'):
+                self.quiet = True
+            elif opt in ('-v', '--verbose'):
+                self.verbose = True
+            elif opt in ('-s', '--syslog'):
+                self.syslog = True
+            elif opt in ('-e', '--noextensions'):
+                self.whitelist_extensions = set(arg.split(','))
 
-         for opt, arg in options:
-             if opt in ('-o', '--output'):
-                 self.output_filename = os.path.abspath(arg)
-             elif opt in ('-d', '--start'):
-                 self.start_path = os.path.abspath(arg)
-             elif opt in ('-q', '--quiet'):
-                 self.quiet = True
-             elif opt in ('-v', '--verbose'):
-                 self.verbose = True
-             elif opt in ('-s', '--syslog'):
-                 self.syslog = True
-
-         self.whitelist_filenames = set([self.output_filename, "/proc", "/dev"])
-         if self.quiet == False:
-             print >> sys.stderr, "Sleeping for %d microseconds every %d lines per file scanned" % (self.sleep_per_scan, self.lines_per_scan)
-
-    def search(self):
-        if os.path.isdir(self.start_path):
-            self.loginit()
-            self.walk(self.start_path)
-        else:
-            print >> sys.stderr, "Starting directory %s does not exist, exiting." % (self.start_path)
+        if self.start_paths == None:
+            print >> sys.stderr, "You must specify the path(s) to scan"
             sys.exit(1)
 
-    def walk(self, dir):
+        self.whitelist_filenames = set([self.output_filename, "/proc", "/dev"])
+
+    def search(self):
+        self.loginit()
+        for path in set(self.start_paths):
+            full_path = os.path.abspath(path)
+            if os.path.exists(full_path):
+                self.walk(full_path)
+            else:
+                print >> sys.stderr, "WARNING: The path %s does not exist" % (full_path)
+
+    def walk(self, start):
         try:
-            for name in os.listdir(dir):
-                path = os.path.join(dir,name)
+            if os.path.isfile(start):
+                (basename, ext) = os.path.splitext(start)
+                ext = ext.replace('.', '', 1)
+                if ext not in self.whitelist_extensions:
+                    self.check(start)
+            elif os.path.isdir(start) and not os.path.islink(start):
+                for name in os.listdir(start):
+                    path = os.path.join(start,name)
+                    if path not in self.whitelist_filenames:
+                        self.walk(path)
 
-                if path in self.whitelist_filenames:
-                    if self.quiet == False:
-                        print >> sys.stderr, "Skipping %s due to whitelisting" % (path)
-                    continue
-
-                if os.path.isfile(path):
-                    self.check(path)
-                elif os.path.isdir(path) and not os.path.islink(path):
-                    self.walk(path)
         except OSError:
+            traceback.print_exc(file=sys.stdout)
             if self.quiet == False:
                 print >> sys.stderr, "Permission denied to %s" % (dir)
 
