@@ -32,7 +32,7 @@ class CardSearch:
              elif opt in ('-s', '--syslog'):
                  self.syslog = True
 
-         self.whitelist_filenames = [self.output_filename, "/proc", "/dev"]
+         self.whitelist_filenames = set([self.output_filename, "/proc", "/dev"])
          if self.quiet == False:
              print >> sys.stderr, "Sleeping for %d microseconds every %d lines per file scanned" % (self.sleep_per_scan, self.lines_per_scan)
 
