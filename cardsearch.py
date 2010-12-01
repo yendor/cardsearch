@@ -114,6 +114,9 @@ class CardSearch:
              self.output_file.write(message)
 
 def possible_credit_card(cardnum):
+    if is_test_cardnum(cardnum):
+        return False
+    
     cardlen = len(cardnum)
 
     if cardnum == "0" * cardlen:
@@ -200,6 +203,24 @@ def possible_credit_card(cardnum):
         return is_luhn_valid(cardnum)
 
     return False
+
+def is_test_cardnum(cc):
+    testNums = set()
+    testNums.add("4111111111111111")
+    testNums.add("4005550000000001")
+    testNums.add("4200000000000000")
+    testNums.add("5123456789012346")
+    testNums.add("5313581000123430")
+    testNums.add("4557012345678902")
+    testNums.add("345678901234564")
+    testNums.add("5610901234567899")
+    testNums.add("30123456789019")
+    testNums.add("4222222222222")
+    testNums.add("370000000000002")
+    testNums.add("5424000000000015")
+    testNums.add("6011000000000012")
+    testNums.add("4007000000027")
+    return cc in testNums
 
 def is_luhn_valid(cc):
      num = map(int, cc)
