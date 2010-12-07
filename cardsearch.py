@@ -38,7 +38,7 @@ class CardSearch:
             print >> sys.stderr, "You must specify the path(s) to scan"
             sys.exit(1)
 
-        self.whitelist_filenames = set([self.output_filename, "/proc", "/dev"])
+        self.whitelist_filenames = set([self.output_filename, "/proc", "/dev", "/sys"])
 
     def search(self):
         self.loginit()
