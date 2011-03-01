@@ -12,13 +12,12 @@ class CardSearch:
 
         self.lines_per_scan = 0
         self.sleep_per_scan = 0
-        self.quiet = False
         self.syslog = False
-        self.verbose = False
+        self.verbose = True
         self.output_file = False
         self.whitelist_extensions = set();
-        shortargs = 'o:qsve:'
-        longargs = ['output=', 'quiet', 'syslog', 'verbose', 'noextensions=']
+        shortargs = 'o:sqe:'
+        longargs = ['output=', 'syslog', 'quiet', 'noextensions=']
 
         options, self.start_paths = getopt.getopt(sys.argv[1:], shortargs, longargs)
 
@@ -26,9 +25,7 @@ class CardSearch:
             if opt in ('-o', '--output'):
                 self.output_filename = os.path.abspath(arg)
             elif opt in ('-q', '--quiet'):
-                self.quiet = True
-            elif opt in ('-v', '--verbose'):
-                self.verbose = True
+                self.verbose = False
             elif opt in ('-s', '--syslog'):
                 self.syslog = True
             elif opt in ('-e', '--noextensions'):
@@ -64,7 +61,7 @@ class CardSearch:
 
         except OSError:
             traceback.print_exc(file=sys.stdout)
-            if self.quiet == False:
+            if self.verbose == True:
                 print >> sys.stderr, "Permission denied to %s" % (dir)
 
     def check(self, filepath):
@@ -79,21 +76,25 @@ class CardSearch:
                 linenum = linenum + 1
                 cardpattern = re.compile(r'(?<!pub-)\b\d{12,19}\b')
 
-                matches = cardpattern.findall(line)
+                matches = cardpattern.finditer(line)
 
                 if matches:
                     for match in matches:
-                        if (possible_credit_card(match)):
-                            confirmed_matches.append(match)
+                        matchedString = match.group(0)
+                        
+                        if (possible_credit_card(matchedString)):
                             if self.verbose:
-                                print "%s %s" % (filepath, match)
+                                context = getContext(line, match)
+                                print "%s - %s\n%s\n" % (filepath, matchedString, context)
+                            else:
+                                confirmed_matches.append(matchedString)
                 if self.lines_per_scan > 0 and linenum % self.lines_per_scan == 0:
                     usleep(self.sleep_per_scan)
-            if confirmed_matches:
+            if confirmed_matches and not self.verbose:
                 self.log("Found %d matches in %s\n" % (len(confirmed_matches), filepath))
 
         except IOError:
-            if not self.quiet:
+            if not self.verbose:
                 print >> sys.stderr, "Can't read %s" % (filepath)
 
     def loginit(self):
@@ -228,6 +229,14 @@ def is_luhn_valid(cc):
 
 def usleep(micro_seconds):
     time.sleep(micro_seconds / 1000000.0)
+    
+def getContext(line, m, contextAmount=40):
+    bold = "\033[1m"
+    reset = "\033[0;0m"
+    line = line.strip()
+
+    context = line[m.start()-contextAmount:m.start()] + bold + line[m.start():m.end()] + reset + line[m.end():m.end()+contextAmount]
+    return context
 
 if __name__ == "__main__":
     s = CardSearch()
