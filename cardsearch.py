@@ -16,8 +16,10 @@ class CardSearch:
         self.verbose = True
         self.output_file = False
         self.whitelist_extensions = set();
-        shortargs = 'o:sqe:'
-        longargs = ['output=', 'syslog', 'quiet', 'noextensions=']
+        self.chunksize = 1024*1024
+        self.cardpattern = re.compile(r'(?<!pub-)\b\d{12,19}\b')
+        shortargs = 'o:sqe:c:'
+        longargs = ['output=', 'syslog', 'quiet', 'noextensions=', 'chunksize=']
 
         options, self.start_paths = getopt.getopt(sys.argv[1:], shortargs, longargs)
 
@@ -30,6 +32,8 @@ class CardSearch:
                 self.syslog = True
             elif opt in ('-e', '--noextensions'):
                 self.whitelist_extensions = set(arg.split(','))
+            elif opt in ('-c', '--chunksize'):
+                self.chunksize = arg
 
         if self.start_paths == None:
             print >> sys.stderr, "You must specify the path(s) to scan"
@@ -66,30 +70,38 @@ class CardSearch:
 
     def check(self, filepath):
         try:
-            f = open(filepath, 'r')
+            last_pos = 0;
+
+            f= open(filepath, 'r')
 
             confirmed_matches = []
 
             linenum=0
+            chunk = f.read(self.chunksize)
 
-            for line in f:
+            while not f.closed:
                 linenum = linenum + 1
-                cardpattern = re.compile(r'(?<!pub-)\b\d{12,19}\b')
 
-                matches = cardpattern.finditer(line)
+                matches = self.cardpattern.finditer(chunk)
 
                 if matches:
                     for match in matches:
                         matchedString = match.group(0)
-                        
+
                         if (possible_credit_card(matchedString)):
                             if self.verbose:
-                                context = getContext(line, match)
+                                context = getContext(chunk, match)
                                 print "%s - %s\n%s\n" % (filepath, matchedString, context)
                             else:
                                 confirmed_matches.append(matchedString)
-                if self.lines_per_scan > 0 and linenum % self.lines_per_scan == 0:
-                    usleep(self.sleep_per_scan)
+                f.seek(-19, os.SEEK_CUR)
+                chunk = f.read(self.chunksize)
+                # If we can't read any more from the file, close it
+                if last_pos == f.tell():
+                    f.close()
+                else:
+                    last_pos = f.tell()
+
             if confirmed_matches and not self.verbose:
                 self.log("Found %d matches in %s\n" % (len(confirmed_matches), filepath))
 
@@ -117,7 +129,7 @@ class CardSearch:
 def possible_credit_card(cardnum):
     if is_test_cardnum(cardnum):
         return False
-    
+
     cardlen = len(cardnum)
 
     if cardnum == "0" * cardlen:
@@ -229,7 +241,7 @@ def is_luhn_valid(cc):
 
 def usleep(micro_seconds):
     time.sleep(micro_seconds / 1000000.0)
-    
+
 def getContext(line, m, contextAmount=40):
     bold = "\033[1m"
     reset = "\033[0;0m"
