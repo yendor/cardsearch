@@ -220,6 +220,7 @@ def possible_credit_card(cardnum):
 def is_test_cardnum(cc):
     testNums = set()
     testNums.add("4111111111111111")
+    testNums.add("4444333322221111")
     testNums.add("4005550000000001")
     testNums.add("4200000000000000")
     testNums.add("5123456789012346")
