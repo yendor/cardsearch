@@ -106,8 +106,10 @@ class CardSearch:
                 self.log("Found %d matches in %s\n" % (len(confirmed_matches), filepath))
 
         except IOError:
-            if not self.verbose:
-                print >> sys.stderr, "Can't read %s" % (filepath)
+            pass
+
+        finally:
+            f.close()
 
     def loginit(self):
         try:
