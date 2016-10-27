@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import getopt, sys, os, re, time
+import getopt, sys, os, re, time, gzip
 import syslog
 
 import traceback
@@ -72,7 +72,10 @@ class CardSearch:
         try:
             last_pos = 0;
 
-            f= open(filepath, 'r')
+            if filepath[-3:] == ".gz":
+                f = gzip.open(filepath, 'r')
+            else:
+                f = open(filepath, 'r')
 
             confirmed_matches = []
 
